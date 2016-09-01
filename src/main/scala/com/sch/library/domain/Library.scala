@@ -1,5 +1,7 @@
 package com.sch.library.domain
 
+import spray.json.DefaultJsonProtocol
+
 /**
  * User: schirkov
  * Date: 9/1/2016
@@ -10,13 +12,16 @@ abstract class Library(id: Long, name: String) {
 
 object Library {
   lazy val listOfBook = List(
-    Book("Programming in Scala Second Edition",
-      List(
-        Author("Martin", "Odersky", null),
-        Author("Lex", "Spoon", null),
-        Author("Bill", "Venners", null))),
-    Book("Scala By Example", List(Author("Martin", "Odersky", null))),
-    Book("Scala Cookbook: Recipes for Object-Oriented and Functional Programming", List(Author("Alvin", "Alexander", null)))
+    Book("Programming in Scala Second Edition", "Martin Odersky, Lex Spoon, Bill Venners"),
+    Book("Scala By Example", "Martin Odersky"),
+    Book("Scala Cookbook: Recipes for Object-Oriented and Functional Programming", "Alvin Alexander")
+//    Book("Programming in Scala Second Edition",
+//      List(
+//        Author("Martin", "Odersky", null),
+//        Author("Lex", "Spoon", null),
+//        Author("Bill", "Venners", null))),
+//    Book("Scala By Example", List(Author("Martin", "Odersky", null))),
+//    Book("Scala Cookbook: Recipes for Object-Oriented and Functional Programming", List(Author("Alvin", "Alexander", null)))
   )
 
   lazy val booksInLibrary = List(
@@ -30,13 +35,28 @@ object Library {
   }
 }
 
-case class Book(name: String, authors: List[Author])
+//case class Book(name: String, authors: List[Author]) problem with json format List[Author]
+case class Book(name: String, authors: String)
+
+object Book extends DefaultJsonProtocol {
+  implicit val bookJsonFormat = jsonFormat2(Book.apply)
+}
 
 case class ConcreteBook(inventoryNumber: String, book: Book)
+
+object ConcreteBook extends DefaultJsonProtocol {
+  implicit val concreteBookJsonFormat = jsonFormat2(ConcreteBook.apply)
+}
 
 case class Author(firstName: String, lastName: String, secondName: String) {
   override def toString = this.productIterator.withFilter(_ != null) mkString " "
 }
+
+object Author extends DefaultJsonProtocol {
+  implicit val authorJsonFormat = jsonFormat3(Author.apply)
+}
+
+
 
 object BookStatus extends Enumeration {
   val available = Value(1)

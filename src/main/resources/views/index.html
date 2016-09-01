@@ -19,6 +19,26 @@
                 }
             }).addClass("ui-tabs-vertical ui-helper-clearfix");
             $("#tabs li").removeClass("ui-corner-top").addClass("ui-corner-left");
+
+            $("#save-book-button").click(function() {
+                var book = {
+                    name : $("#add-book-form input[name=name]").val(),
+                    authors : $("#add-book-form input[name=authors]").val()
+                }
+                $.ajax({
+                    url: "save-book",
+                    contentType: "application/json",
+                    type: "post",
+                    dataType: "json",
+                    data: JSON.stringify(book),
+                    success: function(data) {
+                        alert("Successfully saved! Inventory number is '" + data.inventoryNumber + "'");
+                    },
+                    error: function() {
+                        alert("Oups, something goes wrong!");
+                    }
+                })
+            });
         });
     </script>
     <style>
@@ -68,6 +88,13 @@
     </ul>
     <div id="tabs-2">
         <h2>Add new book</h2>
+        <form method="post" action="" id="add-book-form">
+            <table>
+                <tr><td>Name</td><td><input type="text" name="name"></td></tr>
+                <tr><td>Author</td><td><input type="text" name="authors"></td></tr>
+            </table>
+            <input type="button" value="Save" id="save-book-button"/>
+        </form>
     </div>
     <div id="tabs-3">
         <h2>Users</h2>

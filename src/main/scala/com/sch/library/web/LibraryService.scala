@@ -1,10 +1,11 @@
 package com.sch.library.web
 
 import akka.actor.Actor
-import com.sch.library.domain.Library
-import spray.http.MediaType
+import com.sch.library.domain.{Book, ConcreteBook, Library}
 import spray.http.MediaTypes._
 import spray.routing._
+import spray.json._
+import spray.httpx.SprayJsonSupport._
 
 // we don't implement our route structure directly in the service actor because
 // we want to be able to test it independently, without having to spin up an actor
@@ -61,7 +62,7 @@ trait LibraryService extends HttpService {
                       <td>
                         {b.book.name}
                       </td> <td>
-                        {b.book.authors mkString ", "}
+                        {b.book.authors}
                       </td>
                     </tr>)}
                     </tbody>
@@ -71,5 +72,10 @@ trait LibraryService extends HttpService {
             }
           }
         }
-      }
+      } ~
+  path("save-book") {
+    post {
+      entity(as[Book]) { b => complete(ConcreteBook("qwerty", b)) }
+    }
+  }
 }
