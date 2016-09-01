@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Library</title>
+    <link rel="stylesheet" href="/js/jquery-ui-1.12.0.custom/jquery-ui.css">
+    <script src="/js/jquery-ui-1.12.0.custom/external/jquery/jquery.js"></script>
+    <script src="/js/jquery-ui-1.12.0.custom/jquery-ui.js"></script>
+    <script>
+        $(function () {
+            $("#tabs").tabs({
+                beforeLoad: function (event, ui) {
+                    ui.jqXHR.fail(function () {
+                        ui.panel.html(
+                                        "Couldn't load this tab. We'll try to fix this as soon as possible. " +
+                                        "If this wouldn't be a demo.");
+                    });
+                }
+            }).addClass("ui-tabs-vertical ui-helper-clearfix");
+            $("#tabs li").removeClass("ui-corner-top").addClass("ui-corner-left");
+        });
+    </script>
+    <style>
+        .ui-tabs-vertical {
+            width: 55em;
+        }
+
+        .ui-tabs-vertical .ui-tabs-nav {
+            padding: .2em .1em .2em .2em;
+            float: left;
+            width: 12em;
+        }
+
+        .ui-tabs-vertical .ui-tabs-nav li {
+            clear: left;
+            width: 100%;
+            border-bottom-width: 1px !important;
+            border-right-width: 0 !important;
+            margin: 0 -1px .2em 0;
+        }
+
+        .ui-tabs-vertical .ui-tabs-nav li a {
+            display: block;
+        }
+
+        .ui-tabs-vertical .ui-tabs-nav li.ui-tabs-active {
+            padding-bottom: 0;
+            padding-right: .1em;
+            border-right-width: 1px;
+        }
+
+        .ui-tabs-vertical .ui-tabs-panel {
+            padding: 1em;
+            float: right;
+            width: 40em;
+        }
+    </style>
+</head>
+<body>
+<h1>Library application</h1>
+<div id="tabs">
+    <ul>
+        <li><a href="books">Books</a></li>
+        <li><a href="#tabs-2">Add new book</a></li>
+        <li><a href="#tabs-3">Users</a></li>
+        <li><a href="#tabs-4">Add new user</a></li>
+    </ul>
+    <div id="tabs-2">
+        <h2>Add new book</h2>
+    </div>
+    <div id="tabs-3">
+        <h2>Users</h2>
+    </div>
+    <div id="tabs-4">
+        <h2>Add new user</h2>
+    </div>
+</div>
+</body>
+</html>
