@@ -1,7 +1,7 @@
 package com.sch.library.web
 
 import akka.actor.Actor
-import com.sch.library.domain.{Book, ConcreteBook, Library}
+import com.sch.library.domain.{Book, Library}
 import spray.http.MediaTypes._
 import spray.routing._
 import spray.json._
@@ -60,9 +60,9 @@ trait LibraryService extends HttpService {
                     <tbody>
                       {library.books map (b => <tr>
                       <td>
-                        {b.book.name}
+                        {b.name}
                       </td> <td>
-                        {b.book.authors}
+                        {b.authors}
                       </td>
                     </tr>)}
                     </tbody>
@@ -73,9 +73,14 @@ trait LibraryService extends HttpService {
           }
         }
       } ~
-  path("save-book") {
-    post {
-      entity(as[Book]) { b => complete(ConcreteBook("qwerty", b)) }
-    }
-  }
+      path("save-book") {
+        post {
+          entity(as[Book]) { b => {
+            val book = Book(Some(100), b.name, b.authors, Some("qwerty123"))
+            library.books += book
+            complete(book)
+          }
+          }
+        }
+      }
 }
