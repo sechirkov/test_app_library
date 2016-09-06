@@ -7,6 +7,9 @@ import spray.routing._
 import spray.json._
 import spray.httpx.SprayJsonSupport._
 
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.{Failure, Success}
+
 // we don't implement our route structure directly in the service actor because
 // we want to be able to test it independently, without having to spin up an actor
 class LibraryServiceActor extends Actor with LibraryService {
@@ -46,38 +49,47 @@ trait LibraryService extends HttpService {
       path("books") {
         get {
           respondWithMediaType(`text/html`) {
-            complete {
-              <html>
-                <body>
-                  <p>List of available books:</p>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Name</th>
-                        <th>Authors</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {library.books map (b => <tr>
-                      <td>
-                        {b.name}
-                      </td> <td>
-                        {b.authors}
-                      </td>
-                    </tr>)}
-                    </tbody>
-                  </table>
-                </body>
-              </html>
+            onComplete(library.getBooks) {
+              case Success(books) =>  {
+                complete {
+                  <html>
+                    <body>
+                      <p>List of available books:</p>
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Name</th>
+                            <th>Authors</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {books map (b => <tr>
+                          <td>
+                            {b.name}
+                          </td> <td>
+                            {b.authors}
+                          </td>
+                        </tr>)}
+                        </tbody>
+                      </table>
+                    </body>
+                  </html>
+                }
+              }
+              case Failure(ex) => complete {
+                  <html>
+                    <p>Service is not available.</p>
+                  </html>
+                }
+              }
             }
           }
-        }
-      } ~
+        } ~
       path("save-book") {
         post {
           entity(as[Book]) { b => {
             val book = Book(Some(100), b.name, b.authors, Some("qwerty123"))
-            library.books += book
+            //library.books += book
             complete(book)
           }
           }

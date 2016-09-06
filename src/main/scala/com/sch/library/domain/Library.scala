@@ -4,7 +4,8 @@ import slick.driver.H2Driver.api._
 import slick.lifted.ProvenShape
 
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
+
 
 /**
  * User: schirkov
@@ -23,20 +24,19 @@ object Library {
 
   val library = new Library(1, "Office library") {
     override def getBooks: Future[Seq[Book]] = {
-      //val action: DBIO[Seq[Book]] = books.
       db.run(books.result)
     }
   }
 
-  lazy val db = Database.forConfig("library_db")
+  lazy val db = Database.forConfig("h2mem1")
   lazy val books = TableQuery[BookTable]
-  books.result
 
-  def initDatabase(): Unit = {
-    for {
-      _ <- db.run(books.schema.create)
-      _ <- db.run(books ++= listOfBook)
-    } yield ()
+  def initDatabase()(implicit executionContext: ExecutionContext): Unit = {
+    val setup = DBIO.seq(
+      books.schema.create,
+      books ++= listOfBook
+    )
+    db.run(setup.transactionally)
   }
 }
 
@@ -46,7 +46,9 @@ final class BookTable(tag: Tag) extends Table[Book](tag, "book") {
   def authors = column[String]("authors")
   def inventoryNumber = column[String]("inventory_number")
   def status = column[BookStatus.Value]("status")
-  override def * : ProvenShape[Book] = (id, name, authors, inventoryNumber, status) <> (Book.tupled, Book.unapply)
+  override def * : ProvenShape[Book] = (id.?, name, authors, inventoryNumber.?, status) <> ((Book.apply _).tupled, Book.unapply)
+
+  implicit val enumMapper = MappedColumnType.base[BookStatus.Value, String](_.toString, BookStatus.withName)
 }
 
 //id: Option[Long], name: String, authors: String,
