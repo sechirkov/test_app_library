@@ -18,6 +18,8 @@ case class Book(id: Option[Long], name: String, authors: String,
 object Book extends DefaultJsonProtocol {
   implicit val bookStatusJsonFormat = format(BookStatus)
   implicit val bookJsonFormat = jsonFormat5(Book.apply)
+
+  def tupled = (Book.apply _).tupled
 }
 
 object BookStatus extends Enumeration with DefaultJsonProtocol {
