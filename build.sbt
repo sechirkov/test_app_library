@@ -19,8 +19,9 @@ libraryDependencies ++= {
     "com.typesafe.akka"   %%  "akka-testkit"  % akkaV   % "test",
     "org.specs2"          %%  "specs2-core"   % "2.3.11" % "test",
     "com.typesafe.slick" %% "slick" % "3.0.0",
-    "com.h2database" % "h2" % "1.4.185",
-    "org.slf4j" % "slf4j-nop" % "1.6.4"
+    //"com.h2database" % "h2" % "1.4.185",
+    "postgresql" % "postgresql" % "9.1-901.jdbc4"
+    //"org.slf4j" % "slf4j-nop" % "1.6.4"
   )
 }
 

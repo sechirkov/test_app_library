@@ -1,6 +1,6 @@
 package com.sch.library.domain
 
-import slick.driver.H2Driver.api._
+import slick.driver.PostgresDriver.api._
 import slick.lifted.ProvenShape
 
 import scala.collection.mutable.ArrayBuffer
@@ -28,7 +28,8 @@ object Library {
     }
   }
 
-  lazy val db = Database.forConfig("h2mem1")
+  //lazy val db = Database.forConfig("h2mem1")
+  lazy val db = Database.forConfig("postgres")
   lazy val books = TableQuery[BookTable]
 
   def initDatabase()(implicit executionContext: ExecutionContext): Unit = {
@@ -36,7 +37,7 @@ object Library {
       books.schema.create,
       books ++= listOfBook
     )
-    db.run(setup.transactionally)
+    db.run(setup)
   }
 }
 
