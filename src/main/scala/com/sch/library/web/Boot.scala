@@ -4,7 +4,7 @@ import akka.actor.{ActorSystem, Props}
 import akka.io.IO
 import akka.pattern.ask
 import akka.util.Timeout
-import com.sch.library.domain.Library
+import com.sch.library.dao.LibraryDatabase
 import spray.can.Http
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -22,5 +22,5 @@ object Boot extends App {
   // start a new HTTP server on port 9090 with our service actor as the handler
   IO(Http) ? Http.Bind(service, interface = "localhost", port = 9090)
 
-  Library.initDatabase()
+  LibraryDatabase.init()
 }

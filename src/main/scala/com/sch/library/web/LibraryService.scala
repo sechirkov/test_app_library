@@ -1,11 +1,14 @@
 package com.sch.library.web
 
+import java.util.Date
+
 import akka.actor.Actor
-import com.sch.library.domain.{Book, Library}
+import com.sch.library.domain.Book
+import com.sch.library.service.ComponentRegistry
+import com.sch.library.util.InventoryNumberGenerator
 import spray.http.MediaTypes._
-import spray.routing._
-import spray.json._
 import spray.httpx.SprayJsonSupport._
+import spray.routing._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
@@ -28,7 +31,7 @@ class LibraryServiceActor extends Actor with LibraryService {
 // this trait defines our service behavior independently from the service actor
 trait LibraryService extends HttpService {
 
-  lazy val library = Library.library
+  val bookService = ComponentRegistry.bookService
 
   val username = "User User"
 
@@ -49,8 +52,8 @@ trait LibraryService extends HttpService {
       path("books") {
         get {
           respondWithMediaType(`text/html`) {
-            onComplete(library.getBooks) {
-              case Success(books) =>  {
+            onComplete(bookService.findAll()) {
+              case Success(books) =>
                 complete {
                   <html>
                     <body>
@@ -65,7 +68,7 @@ trait LibraryService extends HttpService {
                         <tbody>
                           {books map (b => <tr>
                           <td>
-                            {b.name}
+                            {b.title}
                           </td> <td>
                             {b.authors}
                           </td>
@@ -75,22 +78,22 @@ trait LibraryService extends HttpService {
                     </body>
                   </html>
                 }
-              }
               case Failure(ex) => complete {
-                  <html>
-                    <p>Service is not available.</p>
-                  </html>
-                }
+                <html>
+                  <p>Service is not available.</p>
+                </html>
               }
             }
           }
-        } ~
+        }
+      } ~
       path("save-book") {
         post {
-          entity(as[Book]) { b => {
-            val book = Book(Some(100), b.name, b.authors, Some("qwerty123"))
-            //library.books += book
-            complete(book)
+          entity(as[Book]) { book => {
+            onComplete(bookService.persist(book.copy(inventoryNumber = Some(InventoryNumberGenerator.generate(book.title, book.authors, new Date()))))) {
+              case Success(b) => complete(b)
+              case Failure(ex) => failWith(ex)
+            }
           }
           }
         }
