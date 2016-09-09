@@ -6,8 +6,7 @@ import slick.dbio.DBIO
 import slick.driver.PostgresDriver.api._
 import slick.jdbc.meta.MTable
 
-import scala.concurrent.ExecutionContext
-import scala.util.Success
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * User: schirkov
@@ -26,22 +25,20 @@ object LibraryDatabase extends DB {
   )
 
   def init()(implicit executionContext: ExecutionContext) = {
-    for {
-      _ <- db.run(MTable.getTables("book")).andThen({
-        case Success(v) => if (v.isEmpty) db.run(DBIO.seq(
-          books.schema.create,
-          books ++= listOfBook
-        ))
+    checkTableExistenceAndDoAction("book", db.run(DBIO.seq(
+      books.schema.create,
+      books ++= listOfBook
+    ))) andThen { case _ =>
+      checkTableExistenceAndDoAction("user", db.run(DBIO.seq(
+        users.schema.create,
+        users ++= userList
+      ))) andThen {
         case _ => db.close()
-      })
+      }
+    }
+  }
 
-      _ <- db.run(MTable.getTables("user")).andThen({
-        case Success(v) => if (v.isEmpty) db.run(DBIO.seq(
-          users.schema.create,
-          users ++= userList
-        ))
-        case _ => db.close()
-      })
-    } yield ()
+  private def checkTableExistenceAndDoAction(tableName: String, action: => Unit)(implicit executionContext: ExecutionContext): Future[_] = {
+    db.run(MTable.getTables(tableName)).flatMap(v => Future { if (v.isEmpty) action })
   }
 }
