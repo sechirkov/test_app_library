@@ -32,6 +32,7 @@ class LibraryServiceActor extends Actor with LibraryService {
 trait LibraryService extends HttpService {
 
   val bookService = ComponentRegistry.bookService
+  val userService = ComponentRegistry.userService
 
   val username = "User User"
 
@@ -95,6 +96,47 @@ trait LibraryService extends HttpService {
               case Failure(ex) => failWith(ex)
             }
           }
+          }
+        }
+      } ~
+      path("users") {
+        get {
+          respondWithMediaType(`text/html`) {
+            onComplete(userService.findAll()) {
+              case Success(users) =>
+                complete {
+                  <html>
+                    <body>
+                      <p>List of users:</p>
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Login</th>
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Second Name</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {users map (u =>
+                          <tr>
+                            <td>{u.login}</td>
+                            <td>{u.firstName}</td>
+                            <td>{u.lastName}</td>
+                            <td>{u.secondName.getOrElse("")}</td>
+                            <td>{u.status}</td>
+                          </tr>)}
+                        </tbody>
+                      </table>
+                    </body>
+                  </html>
+                }
+              case Failure(ex) => complete {
+                <html>
+                  <p>Service is not available.</p>
+                </html>
+              }
+            }
           }
         }
       }

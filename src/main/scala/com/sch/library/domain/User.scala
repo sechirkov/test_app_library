@@ -7,9 +7,13 @@ import spray.json.DefaultJsonProtocol
  * User: schirkov
  * Date: 9/1/2016
  */
-case class User(id: Option[Long], login: String, firstName: String, lastName: String, secondName: String,
+case class User(id: Option[Long], login: String,
+                firstName: String, lastName: String, secondName: Option[String],
                 status: Option[UserStatus.Value] = Some(UserStatus.active)) {
-  def changeStatus(newStatus: UserStatus.Value) = new User(id, login, firstName, lastName, secondName, Some(newStatus))
+  def changeStatus(newStatus: UserStatus.Value) = this.status match {
+    case Some(s) if s == newStatus => this
+    case _ => this.copy(status = Some(newStatus))
+  }
 }
 
 object User extends DefaultJsonProtocol {

@@ -13,7 +13,8 @@ import scala.concurrent.{ExecutionContext, Future}
  * Date: 9/8/2016
  */
 trait BookDaoComponentImpl extends BookDaoComponent {
-  class BookDaoImpl(implicit val executionContext: ExecutionContext) extends BookDao with DB {
+  this: DB =>
+  class BookDaoImpl(implicit val executionContext: ExecutionContext) extends BookDao {
     import Tables._
     override def findAll(): Future[Seq[Book]] = db.run(books.result)
     override def update(book: Book): Future[Boolean] = db.run(books.update(book).map(_ > 0))

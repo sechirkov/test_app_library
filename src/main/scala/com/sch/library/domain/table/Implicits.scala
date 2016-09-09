@@ -1,6 +1,6 @@
 package com.sch.library.domain.table
 
-import com.sch.library.domain.BookStatus
+import com.sch.library.domain.{UserStatus, BookStatus}
 import slick.driver.PostgresDriver.api._
 
 /**
@@ -10,5 +10,6 @@ import slick.driver.PostgresDriver.api._
 object Implicits {
   object Mappings {
     implicit val bookStatusMapper = MappedColumnType.base[BookStatus.Value, String](_.toString, BookStatus.withName)
+    implicit val userStatusMapper = MappedColumnType.base[UserStatus.Value, String](_.toString, UserStatus.withName)
   }
 }

@@ -8,4 +8,5 @@ import slick.lifted.TableQuery
  */
 object Tables {
   lazy val books = TableQuery[BookTable]
+  lazy val users = TableQuery[UserTable]
 }

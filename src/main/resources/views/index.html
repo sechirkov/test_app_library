@@ -23,8 +23,9 @@
             $("#save-book-button").click(function() {
                 var book = {
                     title : $("#add-book-form input[name=title]").val(),
-                    authors : $("#add-book-form input[name=authors]").val()
-                }
+                    authors : $("#add-book-form input[name=authors]").val(),
+                    status: 'available'
+                };
                 $.ajax({
                     url: "save-book",
                     contentType: "application/json",
@@ -83,7 +84,7 @@
     <ul>
         <li><a href="books">Books</a></li>
         <li><a href="#tabs-2">Add new book</a></li>
-        <li><a href="#tabs-3">Users</a></li>
+        <li><a href="users">Users</a></li>
         <li><a href="#tabs-4">Add new user</a></li>
     </ul>
     <div id="tabs-2">
@@ -95,9 +96,6 @@
             </table>
             <input type="button" value="Save" id="save-book-button"/>
         </form>
-    </div>
-    <div id="tabs-3">
-        <h2>Users</h2>
     </div>
     <div id="tabs-4">
         <h2>Add new user</h2>
