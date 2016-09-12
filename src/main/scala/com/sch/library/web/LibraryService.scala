@@ -6,11 +6,16 @@ import akka.actor.Actor
 import com.sch.library.domain.Book
 import com.sch.library.service.ComponentRegistry
 import com.sch.library.util.InventoryNumberGenerator
+import spray.http.FormData
 import spray.http.MediaTypes._
 import spray.httpx.SprayJsonSupport._
+import spray.json._
 import spray.routing._
 
+import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+import scala.language.postfixOps
 import scala.util.{Failure, Success}
 
 // we don't implement our route structure directly in the service actor because
@@ -27,6 +32,22 @@ class LibraryServiceActor extends Actor with LibraryService {
   def receive = runRoute(myRoute)
 }
 
+case class SuccessJson(success: String = "OK", data: Seq[Book])
+
+//class SuccessJsonFormatter extends JsonWriter[SuccessJson] {
+//  override def write(obj: SuccessJson]): JsValue = JsObject(("success", JsString(obj.success)), ("data", JsArray(obj.data.map(_.toJson): _*)))
+//}
+
+object SuccessJson extends DefaultJsonProtocol {
+  implicit val successJsonFormat = jsonFormat2(SuccessJson.apply)
+}
+
+case class FailedJson(error: String)
+
+object FailedJson extends DefaultJsonProtocol {
+  implicit val failedJsonFormat = jsonFormat1(FailedJson.apply)
+}
+
 
 // this trait defines our service behavior independently from the service actor
 trait LibraryService extends HttpService {
@@ -34,7 +55,8 @@ trait LibraryService extends HttpService {
   val bookService = ComponentRegistry.bookService
   val userService = ComponentRegistry.userService
 
-  val username = "User User"
+  val currentUser = Await.result(userService.findByLogin("user"), 1 second)
+  val admin = Await.result(userService.findByLogin("admin"), 1 second)
 
   val myRoute =
     pathPrefix("css") {
@@ -50,41 +72,14 @@ trait LibraryService extends HttpService {
       path("index.html") {
         getFromResource("views/index.html")
       } ~
-      path("books") {
-        get {
-          respondWithMediaType(`text/html`) {
-            onComplete(bookService.findAll()) {
-              case Success(books) =>
-                complete {
-                  <html>
-                    <body>
-                      <p>List of available books:</p>
-                      <table>
-                        <thead>
-                          <tr>
-                            <th>Name</th>
-                            <th>Authors</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {books map (b => <tr>
-                          <td>
-                            {b.title}
-                          </td> <td>
-                            {b.authors}
-                          </td>
-                        </tr>)}
-                        </tbody>
-                      </table>
-                    </body>
-                  </html>
-                }
-              case Failure(ex) => complete {
-                <html>
-                  <p>Service is not available.</p>
-                </html>
-              }
-            }
+      path("books.html") {
+        getFromResource("views/books.html")
+      } ~
+      path("books.json") {
+        post {
+          onComplete(bookService.findAvailable()) {
+            case Success(books) => complete(SuccessJson(data = books))
+            case Failure(ex) => complete(FailedJson(s"Cannot load data: ${ex.getMessage}"))
           }
         }
       } ~
@@ -96,6 +91,15 @@ trait LibraryService extends HttpService {
               case Failure(ex) => failWith(ex)
             }
           }
+          }
+        }
+      } ~
+      path("take-book") {
+        post {
+          entity(as[String]) {
+            (bookId) => {
+              complete(bookId)
+            }
           }
         }
       } ~

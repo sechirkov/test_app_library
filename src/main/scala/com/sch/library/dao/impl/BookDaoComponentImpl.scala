@@ -23,5 +23,12 @@ trait BookDaoComponentImpl extends BookDaoComponent {
       db.run(insertQuery += book)
     }
     override def delete(book: Book): Future[Boolean] = db.run(books.filter(_.id === book.id).delete.map(_ > 0))
+    override def findAvailable(): Future[Seq[Book]] = {
+      val query = (for {
+        b <- books if !logbooks.filter(_.bookId === b.id).filter(_.returnDate.isEmpty).exists
+      } yield b).result
+      query.statements.foreach(println)
+      db.run(query)
+    }
   }
 }

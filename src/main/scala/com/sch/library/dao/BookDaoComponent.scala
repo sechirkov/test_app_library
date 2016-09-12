@@ -15,5 +15,6 @@ trait BookDaoComponent {
     def persist(book: Book): Future[Book]
     def update(book: Book): Future[Boolean]
     def delete(book: Book): Future[Boolean]
+    def findAvailable(): Future[Seq[Book]]
   }
 }

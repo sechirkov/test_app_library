@@ -17,5 +17,6 @@ trait UserServiceComponentImpl extends UserServiceComponent {
     override def update(user: User): Future[Boolean] = userDao.update(user)
     override def persist(user: User): Future[User] = userDao.persist(user)
     override def delete(user: User): Future[Boolean] = userDao.delete(user)
+    override def findByLogin(login: String): Future[Option[User]] = userDao.findByLogin(login)
   }
 }

@@ -34,7 +34,11 @@ object LibraryDatabase extends DB {
       checkTableExistenceAndDoAction("user", db.run(DBIO.seq(
         users.schema.create,
         users ++= userList
-      ))) andThen {
+      ))) flatMap { case _ =>
+          checkTableExistenceAndDoAction("log_book", db.run(DBIO.seq(
+          logbooks.schema.create
+          )))
+      } andThen {
         case _ => db.close()
       }
     }

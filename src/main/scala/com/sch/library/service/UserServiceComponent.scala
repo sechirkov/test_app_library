@@ -16,5 +16,6 @@ trait UserServiceComponent {
     def persist(user: User): Future[User]
     def update(user: User): Future[Boolean]
     def delete(user: User): Future[Boolean]
+    def findByLogin(login: String): Future[Option[User]]
   }
 }
