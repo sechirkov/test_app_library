@@ -6,6 +6,7 @@ import akka.actor.Actor
 import com.sch.library.domain.Book
 import com.sch.library.service.ComponentRegistry
 import com.sch.library.util.InventoryNumberGenerator
+import com.sch.library.web.model.{BookListJson, FailedJson}
 import spray.http.FormData
 import spray.http.MediaTypes._
 import spray.httpx.SprayJsonSupport._
@@ -31,23 +32,6 @@ class LibraryServiceActor extends Actor with LibraryService {
   // or timeout handling
   def receive = runRoute(myRoute)
 }
-
-case class SuccessJson(success: String = "OK", data: Seq[Book])
-
-//class SuccessJsonFormatter extends JsonWriter[SuccessJson] {
-//  override def write(obj: SuccessJson]): JsValue = JsObject(("success", JsString(obj.success)), ("data", JsArray(obj.data.map(_.toJson): _*)))
-//}
-
-object SuccessJson extends DefaultJsonProtocol {
-  implicit val successJsonFormat = jsonFormat2(SuccessJson.apply)
-}
-
-case class FailedJson(error: String)
-
-object FailedJson extends DefaultJsonProtocol {
-  implicit val failedJsonFormat = jsonFormat1(FailedJson.apply)
-}
-
 
 // this trait defines our service behavior independently from the service actor
 trait LibraryService extends HttpService {
@@ -78,7 +62,7 @@ trait LibraryService extends HttpService {
       path("books.json") {
         post {
           onComplete(bookService.findAvailable()) {
-            case Success(books) => complete(SuccessJson(data = books))
+            case Success(books) => complete(BookListJson(data = books))
             case Failure(ex) => complete(FailedJson(s"Cannot load data: ${ex.getMessage}"))
           }
         }

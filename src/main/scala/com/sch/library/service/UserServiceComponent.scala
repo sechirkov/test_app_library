@@ -11,6 +11,7 @@ import scala.concurrent.Future
  */
 trait UserServiceComponent {
   this: UserDaoComponent =>
+  val userService: UserService
   trait UserService {
     def findAll(): Future[Seq[User]]
     def persist(user: User): Future[User]
