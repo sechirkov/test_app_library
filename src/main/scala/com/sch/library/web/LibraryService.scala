@@ -1,16 +1,15 @@
 package com.sch.library.web
 
+import java.sql.Timestamp
 import java.util.Date
 
 import akka.actor.Actor
-import com.sch.library.domain.Book
+import com.sch.library.domain.{Book, LogBook}
 import com.sch.library.service.ComponentRegistry
 import com.sch.library.util.InventoryNumberGenerator
-import com.sch.library.web.model.{BookListJson, FailedJson}
-import spray.http.FormData
+import com.sch.library.web.model.{BookListJson, FailedJson, TakeBookJson}
 import spray.http.MediaTypes._
 import spray.httpx.SprayJsonSupport._
-import spray.json._
 import spray.routing._
 
 import scala.concurrent.Await
@@ -38,6 +37,7 @@ trait LibraryService extends HttpService {
 
   val bookService = ComponentRegistry.bookService
   val userService = ComponentRegistry.userService
+  val logbookService = ComponentRegistry.logbookService
 
   val currentUser = Await.result(userService.findByLogin("user"), 1 second)
   val admin = Await.result(userService.findByLogin("admin"), 1 second)
@@ -80,9 +80,12 @@ trait LibraryService extends HttpService {
       } ~
       path("take-book") {
         post {
-          entity(as[String]) {
-            (bookId) => {
-              complete(bookId)
+          entity(as[TakeBookJson]) {
+            (request) => {
+              onComplete(logbookService.persist(LogBook(None, request.bookId, currentUser.get.id.get, admin.get.id.get, new Timestamp(System.currentTimeMillis)))) {
+                case Success(lb) => complete(lb.id.get.toString)
+                case Failure(ex) => failWith(ex)
+              }
             }
           }
         }
