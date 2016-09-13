@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="/js/jquery-ui-1.12.0.custom/jquery-ui.css">
     <script src="/js/jquery-ui-1.12.0.custom/external/jquery/jquery.js"></script>
     <script src="/js/jquery-ui-1.12.0.custom/jquery-ui.js"></script>
+    <script src="/js/jquery.cookie.js"></script>
     <script>
         $(function () {
             $("#tabs").tabs({
@@ -18,6 +19,15 @@
                 }
             }).addClass("ui-tabs-vertical ui-helper-clearfix");
             $("#tabs li").removeClass("ui-corner-top").addClass("ui-corner-left");
+
+            var user = $.cookie("current_user");
+            if (user) {
+                $("#not-selected-user").hide();
+                $("#selected-user").html('<p>Current user: <b>' + user + '</b></p>').show();
+                var form = $("#select-user-form");
+                form.find("input[name=action]").val("end-work");
+                form.find("input[name=select_user_button]").val("Cancel");
+            }
         });
     </script>
     <style>
@@ -59,10 +69,14 @@
 <body>
 <h1>Library application</h1>
 <div>
-    <form method="post" action="/select-user">
-        <label>Select the user</label>
-        <input type="text" id="user_login" name="user_login"/>
-        <input type="submit" id="select_user" value="Select"/>
+    <form method="post" action="/process-user" id="select-user-form">
+        <div id="not-selected-user">
+            <label>Select the user</label>
+            <input type="text" name="current_user"/>
+        </div>
+        <div id="selected-user" style="display: none"></div>
+        <input type="hidden" name="action" value="start-work"/>
+        <input type="submit" name="select_user_button" value="Select"/>
     </form>
 </div>
 <div id="tabs">

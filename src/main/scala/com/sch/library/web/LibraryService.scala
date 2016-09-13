@@ -9,10 +9,10 @@ import com.sch.library.service.ComponentRegistry
 import com.sch.library.util.InventoryNumberGenerator
 import com.sch.library.web.model.{BookListJson, FailedJson, TakeBookJson, UserListJson}
 import spray.caching.{Cache, LruCache}
-import spray.http.HttpCookie
+import spray.http.{HttpCookie, StatusCodes}
 import spray.httpx.SprayJsonSupport._
 import spray.routing._
-import spray.routing.authentication.{CachedUserPassAuthenticator, BasicAuth, UserPass}
+import spray.routing.authentication.{BasicAuth, CachedUserPassAuthenticator, UserPass}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -42,8 +42,6 @@ trait LibraryService extends HttpService {
   val bookService = ComponentRegistry.bookService
   val userService = ComponentRegistry.userService
   val logbookService = ComponentRegistry.logbookService
-
-  val currentUser = Await.result(userService.findByLogin("user"), 1 second)
 
   lazy val cache:Cache[Option[User]] = LruCache(timeToLive = 5 minute)
 
@@ -93,10 +91,15 @@ trait LibraryService extends HttpService {
           path("take-book") {
             post {
               entity(as[TakeBookJson]) {
-                (request) => {
-                  onComplete(logbookService.persist(LogBook(None, request.bookId, currentUser.get.id.get, admin.id.get, new Timestamp(System.currentTimeMillis)))) {
-                    case Success(lb) => complete(lb.id.get.toString)
-                    case Failure(ex) => failWith(ex)
+                request => {
+                  cookie("current_user") { currentUser =>
+                    onComplete(userService.findByLogin(currentUser.content)) {
+                      case Success(Some(user)) => onComplete(logbookService.persist(LogBook(None, request.bookId, user.id.get, admin.id.get, new Timestamp(System.currentTimeMillis)))) {
+                        case Success(lb) => complete(lb.id.get.toString)
+                        case Failure(ex) => failWith(ex)
+                      }
+                      case Failure(ex) => failWith(ex)
+                    }
                   }
                 }
               }
@@ -130,22 +133,16 @@ trait LibraryService extends HttpService {
               }
             }
           } ~
-          path("select-user") {
+          path("process-user") {
             post {
-              parameters('user_login) { login => //todo Request is missing required query parameter 'user_login'
-                setCookie(HttpCookie("current_user", login)) {
-                  complete("OK")
-                }
+              formFields('action, 'current_user) { (action, login) =>
+                val cookie = HttpCookie("current_user", login)
+                (action match {
+                  case "start-work" => setCookie(cookie)
+                  case "end-work" => deleteCookie(cookie)
+                }) {redirect("index.html", StatusCodes.Found)}
               }
             }
           }
       }
-  /*~
-        optionalCookie("currentUser") {
-          case Some(nameCookie) => complete(s"The logged in user is '${nameCookie.content}'")
-          case None => complete("No user logged in")
-        } ~
-        setCookie(HttpCookie("userName", content = currentUser.get.login)) {
-          complete("The user was logged in")
-        }*/
 }
