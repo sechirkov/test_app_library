@@ -12,6 +12,7 @@ libraryDependencies ++= {
   val sprayJSON = "1.3.2"
   Seq(
     "io.spray"            %%  "spray-can"     % sprayV,
+    "io.spray"            %%  "spray-caching"     % sprayV,
     "io.spray"            %%  "spray-routing" % sprayV,
     "io.spray"            %%  "spray-json" % sprayJSON,
     "io.spray"            %%  "spray-testkit" % sprayV  % "test",
