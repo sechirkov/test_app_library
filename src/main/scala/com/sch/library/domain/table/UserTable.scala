@@ -16,5 +16,7 @@ final class UserTable(tag: Tag) extends Table[User](tag, "user"){
   def secondName = column[Option[String]]("second_name")
   def status = column[UserStatus.Value]("status", O.Default(UserStatus.active))
 
+  def uniqueLoginIdx = index("idx_user_login", login, unique = true)
+
   override def * = (id.?, login, firstName, lastName, secondName, status.?) <> ((User.apply _).tupled, User.unapply)
 }

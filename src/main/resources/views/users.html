@@ -1,0 +1,58 @@
+<html>
+<script>
+    function loadAllUsers() {
+        $.ajax({
+            url: "users.json",
+            contentType: "application/json",
+            type: "post",
+            dataType: "json",
+            success: function (result) {
+                $("#users tbody").empty();
+                var html = "";
+                if (result.success) {
+                    var data = result.data;
+                    for (var i = 0; i < data.length; i++) {
+                        html += "<tr><td>" + data[i].login
+                                + "</td><td>" + data[i].firstName
+                                + "</td><td>" + data[i].lastName
+                                + "</td><td>" + (data[i].secondName !== undefined ? data[i].secondName : '')
+                                + "</td><td>" + data[i].status
+                                + "</td></tr>";
+                    }
+                    $("#users tbody").append(html);
+                } else if (result.error) {
+                    alert(result.error);
+                }
+            },
+            error: function () {
+                alert("Oups, something goes wrong!");
+            }
+        });
+    }
+    $(function() {
+        loadAllUsers();
+    });
+</script>
+<body>
+<p>List of users:</p>
+<table id="users">
+    <thead>
+    <tr>
+        <th>Login</th>
+        <th>First Name</th>
+        <th>Last Name</th>
+        <th>Second Name</th>
+    </tr>
+    </thead>
+    <tbody>
+<!--    <tr>
+        <td>login</td>
+        <td>firstName</td>
+        <td>lastName</td>
+        <td>secondName</td>
+        <td>status</td>
+    </tr>-->
+    </tbody>
+</table>
+</body>
+</html>

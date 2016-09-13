@@ -1,0 +1,42 @@
+<html>
+<script>
+    $(function () {
+        $("#save-book-button").click(function () {
+            var book = {
+                title: $("#add-book-form input[name=title]").val(),
+                authors: $("#add-book-form input[name=authors]").val(),
+                status: 'available'
+            };
+            $.ajax({
+                url: "save-book",
+                contentType: "application/json",
+                type: "post",
+                dataType: "json",
+                data: JSON.stringify(book),
+                success: function (data) {
+                    alert("Successfully saved! Inventory number is '" + data.inventoryNumber + "'");
+                },
+                error: function () {
+                    alert("Oups, something goes wrong!");
+                }
+            })
+        });
+    });
+</script>
+<body>
+<h2>Add new book</h2>
+<form method="post" action="" id="add-book-form">
+    <table>
+        <tr>
+            <td>Name</td>
+            <td><input type="text" name="title"></td>
+        </tr>
+        <tr>
+            <td>Author</td>
+            <td><input type="text" name="authors"></td>
+        </tr>
+    </table>
+    <input type="button" value="Save" id="save-book-button"/>
+</form>
+</body>
+</html>

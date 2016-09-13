@@ -4,11 +4,11 @@ import java.sql.Timestamp
 import java.util.Date
 
 import akka.actor.Actor
-import com.sch.library.domain.{Book, LogBook}
+import com.sch.library.domain.{Book, LogBook, User}
 import com.sch.library.service.ComponentRegistry
 import com.sch.library.util.InventoryNumberGenerator
-import com.sch.library.web.model.{BookListJson, FailedJson, TakeBookJson}
-import spray.http.MediaTypes._
+import com.sch.library.web.model.{BookListJson, FailedJson, TakeBookJson, UserListJson}
+import spray.http.HttpCookie
 import spray.httpx.SprayJsonSupport._
 import spray.routing._
 
@@ -90,45 +90,39 @@ trait LibraryService extends HttpService {
           }
         }
       } ~
-      path("users") {
-        get {
-          respondWithMediaType(`text/html`) {
-            onComplete(userService.findAll()) {
-              case Success(users) =>
-                complete {
-                  <html>
-                    <body>
-                      <p>List of users:</p>
-                      <table>
-                        <thead>
-                          <tr>
-                            <th>Login</th>
-                            <th>First Name</th>
-                            <th>Last Name</th>
-                            <th>Second Name</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {users map (u =>
-                          <tr>
-                            <td>{u.login}</td>
-                            <td>{u.firstName}</td>
-                            <td>{u.lastName}</td>
-                            <td>{u.secondName.getOrElse("")}</td>
-                            <td>{u.status}</td>
-                          </tr>)}
-                        </tbody>
-                      </table>
-                    </body>
-                  </html>
-                }
-              case Failure(ex) => complete {
-                <html>
-                  <p>Service is not available.</p>
-                </html>
-              }
-            }
+      path("users.html") {
+        getFromResource("views/users.html")
+      } ~
+      path("users.json") {
+        post {
+          onComplete(userService.findAll()) {
+            case Success(users) => complete(UserListJson(data = users))
+            case Failure(ex) => complete(FailedJson(s"Cannot load data: ${ex.getMessage}"))
           }
         }
-      }
+      } ~
+      path("add-user.html") {
+        getFromResource("views/add-user.html")
+      } ~
+      path("add-book.html") {
+        getFromResource("views/add-book.html")
+      } ~
+      path("save-user") {
+        post {
+          entity(as[User]) { user => {
+            onComplete(userService.persist(user)) {
+              case Success(u) => complete(u)
+              case Failure(ex) => failWith(ex)
+            }
+          }
+          }
+        }
+      } /*~
+      optionalCookie("currentUser") {
+        case Some(nameCookie) => complete(s"The logged in user is '${nameCookie.content}'")
+        case None => complete("No user logged in")
+      } ~
+      setCookie(HttpCookie("userName", content = currentUser.get.login)) {
+        complete("The user was logged in")
+      }*/
 }

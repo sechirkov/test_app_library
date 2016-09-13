@@ -1,0 +1,54 @@
+<html>
+<script>
+    $(function () {
+        $("#add-user-button").click(function () {
+            var form = $("#add-user-form");
+            var user = {
+                login: form.find("input[name=login]").val(),
+                firstName: form.find("input[name=first_name]").val(),
+                lastName: form.find("input[name=last_name]").val(),
+                secondName: form.find("input[name=second_name]").val(),
+                status: 'active'
+            };
+            $.ajax({
+                url: "save-user",
+                contentType: "application/json",
+                type: "post",
+                dataType: "json",
+                data: JSON.stringify(user),
+                success: function (data) {
+                    alert("Successfully saved!");
+                    form.find("input[type=text]").val("")
+                },
+                error: function () {
+                    alert("Oups, something goes wrong!");
+                }
+            })
+        });
+    });
+</script>
+<body>
+<h2>Add new book</h2>
+<form method="post" action="" id="add-user-form">
+    <table>
+        <tr>
+            <td>Login</td>
+            <td><input type="text" name="login"/></td>
+        </tr>
+        <tr>
+            <td>First name</td>
+            <td><input type="text" name="first_name"/></td>
+        </tr>
+        <tr>
+            <td>Last name</td>
+            <td><input type="text" name="last_name"/></td>
+        </tr>
+        <tr>
+            <td>Second name</td>
+            <td><input type="text" name="second_name"/></td>
+        </tr>
+    </table>
+    <input type="button" value="Add" id="add-user-button"/>
+</form>
+</body>
+</html>
