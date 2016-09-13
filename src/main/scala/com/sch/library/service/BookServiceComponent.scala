@@ -19,5 +19,6 @@ trait BookServiceComponent {
     def update(book: Book): Future[Boolean]
     def delete(book: Book): Future[Boolean]
     def findAvailable(): Future[Seq[Book]]
+    def findBooksTakenByUser(userId: Long): Future[Seq[Book]]
   }
 }

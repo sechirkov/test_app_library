@@ -28,9 +28,16 @@ trait BookDaoComponentImpl extends BookDaoComponent {
       val query = (for {
         b <- books if !logbooks.filter(_.bookId === b.id).filter(_.returnDate.isEmpty).map(_ => 1).exists
       } yield b).result
-      query.statements.foreach(println)
+      //query.statements.foreach(println)
       db.run(query)
     }
     override def find(id: ID): Future[Option[Book]] = throw new UnsupportedOperationException
+    override def findBooksTakenByUser(userId: Long): Future[Seq[Book]] = {
+      val query = (for {
+        b <- books if logbooks.filter(_.bookId === b.id).filter(_.returnDate.isEmpty).filter(_.userId === userId).map(_ => 1).exists
+      } yield b).result
+      query.statements.foreach(println)
+      db.run(query)
+    }
   }
 }

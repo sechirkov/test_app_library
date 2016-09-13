@@ -20,7 +20,11 @@ trait LogBookDaoComponentImpl extends LogBookDaoComponent {
       val insertQuery = logbooks returning logbooks.map(_.id) into ((logbook, id) => logbook.copy(id=Some(id)))
       db.run(insertQuery += logbook)
     }
-    override def update(logbook: LogBook): Future[Boolean] = db.run(logbooks.update(logbook).map(_ > 0))
+    override def update(logbook: LogBook): Future[Boolean] = {
+      val query = logbooks.filter(_.id === logbook.id).map(lb => (lb.receivedByUser, lb.returnDate)).update((logbook.receivedByUser, logbook.returnDate))
+      query.statements.foreach(println)
+      db.run(query.map(_ > 0)) //todo refactor update query
+    }
     override def findLastEntryByBookId(bookId: Long): Future[Option[LogBook]] = db.run(logbooks.filter(_.bookId === bookId).filter(_.returnDate.isEmpty).result.headOption)
     override def findByBookId(bookId: Long): Future[Option[LogBook]] = db.run(logbooks.filter(_.bookId === bookId).result.headOption)
     override def findAll(): Future[Seq[LogBook]] = throw new UnsupportedOperationException

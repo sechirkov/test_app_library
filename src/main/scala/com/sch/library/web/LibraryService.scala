@@ -138,11 +138,39 @@ trait LibraryService extends HttpService {
               formFields('action, 'current_user) { (action, login) =>
                 val cookie = HttpCookie("current_user", login)
                 (action match {
-                  case "start-work" => setCookie(cookie)
+                  case "start-work" => setCookie(cookie) //todo add user validation
                   case "end-work" => deleteCookie(cookie)
-                }) {redirect("index.html", StatusCodes.Found)}
+                }) {
+                  redirect("index.html", StatusCodes.Found)
+                }
               }
             }
+          } ~
+          path("taken-books.html") {
+            getFromResource("views/taken-books.html")
+          } ~
+          path("taken-books.json") {
+            post {
+              cookie("current_user") { currentUser =>
+                onComplete(userService.findByLogin(currentUser.content)) {
+                  case Success(Some(user)) => onComplete(bookService.findBooksTakenByUser(user.id.get)) {
+                    case Success(books) => complete(BookListJson(data = books))
+                    case Failure(ex) => complete(FailedJson(s"Cannot load data: ${ex.getMessage}"))
+                  }
+                  case Failure(ex) => failWith(ex)
+                }
+              }
+            }
+          } ~ path("return-book") {
+          entity(as[TakeBookJson]) { request =>
+            onComplete(logbookService.findLastEntryByBookId(request.bookId) flatMap {
+              case Some(logbook) => logbookService.update(logbook.copy(receivedByUser = admin.id, returnDate = Some(new Timestamp(System.currentTimeMillis)))) //.copy(receivedByUser = admin.id, ))
+            }) {
+              case Success(_) => complete("OK")
+              case Failure(ex) => failWith(ex)
+
+            }
           }
+        }
       }
 }

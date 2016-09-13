@@ -21,5 +21,6 @@ trait BookServiceComponentImpl extends BookServiceComponent {
     override def persist(book: Book): Future[Book] = bookDao.persist(book)
     override def delete(book: Book): Future[Boolean] = bookDao.delete(book)
     override def findAvailable(): Future[Seq[Book]] = bookDao.findAvailable()
+    override def findBooksTakenByUser(userId: Long): Future[Seq[Book]] = bookDao.findBooksTakenByUser(userId)
   }
 }

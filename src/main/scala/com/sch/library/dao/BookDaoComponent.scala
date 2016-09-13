@@ -12,5 +12,6 @@ trait BookDaoComponent {
   val bookDao: BookDao
   trait BookDao extends GenericDao[Book] {
     def findAvailable(): Future[Seq[Book]]
+    def findBooksTakenByUser(userId: Long): Future[Seq[Book]]
   }
 }

@@ -1,0 +1,75 @@
+<html>
+<script>
+    function returnBook(el) {
+        var id = $(el).data('id');
+        $.ajax({
+            url: "return-book",
+            contentType: "application/json",
+            type: "post",
+            dataType: "json",
+            data: JSON.stringify({bookId: id}),
+            success: function (result) {
+                //nothing here
+            },
+            error: function () {
+                alert("Oups, something goes wrong!");
+            }
+        }).always(loadTakenBooks);
+    }
+    function loadTakenBooks() {
+        $.ajax({
+            url: "taken-books.json",
+            contentType: "application/json",
+            type: "post",
+            dataType: "json",
+            success: function (result) {
+                $("#taken-books tbody").empty();
+                var html = "";
+                if (result.success) {
+                    var data = result.data;
+                    for (var i = 0; i < data.length; i++) {
+                        html += "<tr><td>" + data[i].title
+                                + "</td><td>" + data[i].authors
+                                + "</td><td><input type='button' onclick='returnBook(this)' value='Return' data-id='"
+                                + data[i].id + "'></td><input></td></tr>";
+                    }
+                    $("#taken-books tbody").append(html);
+                } else if (result.error) {
+                    alert(result.error);
+                }
+            },
+            error: function () {
+                alert("Oups, something goes wrong!");
+            }
+        });
+    }
+    $(function() {
+        loadTakenBooks();
+    });
+</script>
+<body>
+<p>List of taken books:</p>
+<table id="taken-books">
+    <thead>
+    <tr>
+        <th>Name</th>
+        <th>Authors</th>
+        <th>Action</th>
+    </tr>
+    </thead>
+    <tbody>
+    <!--<tr>
+        <td>
+            title
+        </td>
+        <td>
+            authors
+        </td>
+        <td>
+            button
+        </td>
+    </tr>-->
+    </tbody>
+</table>
+</body>
+</html>
