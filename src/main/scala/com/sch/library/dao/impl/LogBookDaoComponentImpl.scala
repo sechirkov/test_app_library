@@ -14,6 +14,7 @@ import scala.concurrent.{ExecutionContext, Future}
 trait LogBookDaoComponentImpl extends LogBookDaoComponent {
   this: DB =>
   class LogBookDaoImpl(implicit val executionContext: ExecutionContext) extends LogBookDao {
+    override type ID = Long
     import Tables._
     override def persist(logbook: LogBook): Future[LogBook] = {
       val insertQuery = logbooks returning logbooks.map(_.id) into ((logbook, id) => logbook.copy(id=Some(id)))
@@ -22,5 +23,8 @@ trait LogBookDaoComponentImpl extends LogBookDaoComponent {
     override def update(logbook: LogBook): Future[Boolean] = db.run(logbooks.update(logbook).map(_ > 0))
     override def findLastEntryByBookId(bookId: Long): Future[Option[LogBook]] = db.run(logbooks.filter(_.bookId === bookId).filter(_.returnDate.isEmpty).result.headOption)
     override def findByBookId(bookId: Long): Future[Option[LogBook]] = db.run(logbooks.filter(_.bookId === bookId).result.headOption)
+    override def findAll(): Future[Seq[LogBook]] = throw new UnsupportedOperationException
+    override def delete(entity: LogBook): Future[Boolean] = throw new UnsupportedOperationException
+    override def find(id: ID): Future[Option[LogBook]] = throw new UnsupportedOperationException
   }
 }

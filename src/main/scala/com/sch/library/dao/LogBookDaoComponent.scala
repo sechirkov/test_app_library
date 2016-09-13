@@ -10,9 +10,7 @@ import scala.concurrent.Future
   */
 trait LogBookDaoComponent {
   val logbookDao:LogBookDao
-  trait LogBookDao {
-    def persist(logbook: LogBook): Future[LogBook]
-    def update(logbook: LogBook): Future[Boolean]
+  trait LogBookDao extends GenericDao[LogBook] {
     def findByBookId(bookId: Long): Future[Option[LogBook]]
     def findLastEntryByBookId(bookId: Long): Future[Option[LogBook]]
   }

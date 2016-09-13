@@ -10,11 +10,7 @@ import scala.concurrent.Future
  */
 trait UserDaoComponent {
   val userDao: UserDao
-  trait UserDao {
-    def findAll(): Future[Seq[User]]
-    def persist(user: User): Future[User]
-    def update(user: User): Future[Boolean]
-    def delete(user: User): Future[Boolean]
+  trait UserDao extends GenericDao[User] {
     def findByLogin(login: String): Future[Option[User]]
   }
 }

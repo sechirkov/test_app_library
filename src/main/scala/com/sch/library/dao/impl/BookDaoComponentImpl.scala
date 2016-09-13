@@ -15,6 +15,7 @@ import scala.concurrent.{ExecutionContext, Future}
 trait BookDaoComponentImpl extends BookDaoComponent {
   this: DB =>
   class BookDaoImpl(implicit val executionContext: ExecutionContext) extends BookDao {
+    override type ID = Long
     import Tables._
     override def findAll(): Future[Seq[Book]] = db.run(books.result)
     override def update(book: Book): Future[Boolean] = db.run(books.update(book).map(_ > 0))
@@ -30,5 +31,6 @@ trait BookDaoComponentImpl extends BookDaoComponent {
       query.statements.foreach(println)
       db.run(query)
     }
+    override def find(id: ID): Future[Option[Book]] = throw new UnsupportedOperationException
   }
 }

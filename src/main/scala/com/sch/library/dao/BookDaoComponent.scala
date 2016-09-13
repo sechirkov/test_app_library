@@ -10,11 +10,7 @@ import scala.concurrent.Future
  */
 trait BookDaoComponent {
   val bookDao: BookDao
-  trait BookDao {
-    def findAll(): Future[Seq[Book]]
-    def persist(book: Book): Future[Book]
-    def update(book: Book): Future[Boolean]
-    def delete(book: Book): Future[Boolean]
+  trait BookDao extends GenericDao[Book] {
     def findAvailable(): Future[Seq[Book]]
   }
 }
