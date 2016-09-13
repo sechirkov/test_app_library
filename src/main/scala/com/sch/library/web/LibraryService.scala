@@ -9,6 +9,7 @@ import com.sch.library.service.ComponentRegistry
 import com.sch.library.util.InventoryNumberGenerator
 import com.sch.library.web.model.{BookListJson, FailedJson, TakeBookJson, UserListJson}
 import spray.caching.{Cache, LruCache}
+import spray.http.HttpCookie
 import spray.httpx.SprayJsonSupport._
 import spray.routing._
 import spray.routing.authentication.{CachedUserPassAuthenticator, BasicAuth, UserPass}
@@ -126,6 +127,15 @@ trait LibraryService extends HttpService {
                   case Failure(ex) => failWith(ex)
                 }
               }
+              }
+            }
+          } ~
+          path("select-user") {
+            post {
+              parameters('user_login) { login => //todo Request is missing required query parameter 'user_login'
+                setCookie(HttpCookie("current_user", login)) {
+                  complete("OK")
+                }
               }
             }
           }

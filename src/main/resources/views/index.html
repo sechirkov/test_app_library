@@ -59,9 +59,11 @@
 <body>
 <h1>Library application</h1>
 <div>
-    <label>Select the user</label>
-    <input type="text" id="user_login"/>
-    <input type="button" id="select_user" value="Select"/>
+    <form method="post" action="/select-user">
+        <label>Select the user</label>
+        <input type="text" id="user_login" name="user_login"/>
+        <input type="submit" id="select_user" value="Select"/>
+    </form>
 </div>
 <div id="tabs">
     <ul>
