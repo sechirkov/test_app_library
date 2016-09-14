@@ -1,4 +1,4 @@
-package com.sch.library.domain.table
+package com.sch.library.dao.table
 
 import com.sch.library.domain.{UserStatus, BookStatus}
 import slick.driver.PostgresDriver.api._

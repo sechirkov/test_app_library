@@ -16,7 +16,6 @@ trait BookServiceComponent {
   trait BookService {
     def findAll(): Future[Seq[Book]]
     def persist(book: Book): Future[Book]
-    def update(book: Book): Future[Boolean]
     def delete(book: Book): Future[Boolean]
     def findAvailable(): Future[Seq[Book]]
     def findBooksTakenByUser(userId: Long): Future[Seq[Book]]

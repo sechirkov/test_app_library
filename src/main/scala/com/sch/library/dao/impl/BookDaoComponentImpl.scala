@@ -1,10 +1,8 @@
 package com.sch.library.dao.impl
 
-import com.sch.library.dao.{DB, BookDaoComponent}
+import com.sch.library.dao.{DBComponent, BookDaoComponent}
 import com.sch.library.domain.Book
-import com.sch.library.domain.table.Tables
-
-import slick.driver.PostgresDriver.api._
+import com.sch.library.dao.table.{LogBookTable, BookTable}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -12,13 +10,13 @@ import scala.concurrent.{ExecutionContext, Future}
  * User: schirkov
  * Date: 9/8/2016
  */
-trait BookDaoComponentImpl extends BookDaoComponent {
-  this: DB =>
+trait BookDaoComponentImpl extends BookDaoComponent with BookTable with LogBookTable {
+  this: DBComponent =>
+  import driver.api._
+
   class BookDaoImpl(implicit val executionContext: ExecutionContext) extends BookDao {
     override type ID = Long
-    import Tables._
     override def findAll(): Future[Seq[Book]] = db.run(books.result)
-    override def update(book: Book): Future[Boolean] = db.run(books.update(book).map(_ > 0))
     override def persist(book: Book): Future[Book] = {
       val insertQuery = books returning books.map(_.id) into ((book, id) => book.copy(id=Some(id)))
       db.run(insertQuery += book)

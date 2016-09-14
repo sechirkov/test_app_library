@@ -13,5 +13,6 @@ trait LogBookDaoComponent {
   trait LogBookDao extends GenericDao[LogBook] {
     def findByBookId(bookId: Long): Future[Option[LogBook]]
     def findLastEntryByBookId(bookId: Long): Future[Option[LogBook]]
+    def update(logbook: LogBook): Future[Boolean]
   }
 }

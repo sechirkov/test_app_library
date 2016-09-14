@@ -7,7 +7,7 @@ import akka.actor.Actor
 import com.sch.library.domain.{Book, LogBook, User}
 import com.sch.library.service.ComponentRegistry
 import com.sch.library.util.InventoryNumberGenerator
-import com.sch.library.web.model.{BookListJson, FailedJson, TakeBookJson, UserListJson}
+import com.sch.library.web.model._
 import spray.caching.{Cache, LruCache}
 import spray.http.{HttpCookie, StatusCodes}
 import spray.httpx.SprayJsonSupport._
@@ -90,7 +90,7 @@ trait LibraryService extends HttpService {
           } ~
           path("take-book") {
             post {
-              entity(as[TakeBookJson]) {
+              entity(as[BookIdJson]) {
                 request => {
                   cookie("current_user") { currentUser =>
                     onComplete(userService.findByLogin(currentUser.content)) {
@@ -137,11 +137,19 @@ trait LibraryService extends HttpService {
             post {
               formFields('action, 'current_user) { (action, login) =>
                 val cookie = HttpCookie("current_user", login)
-                (action match {
-                  case "start-work" => setCookie(cookie) //todo add user validation
-                  case "end-work" => deleteCookie(cookie)
-                }) {
-                  redirect("index.html", StatusCodes.Found)
+                action match {
+                  case "start-work" => onComplete(userService.findByLogin(login)) {
+                    case Success(Some(user)) =>
+                      setCookie(cookie) {
+                        redirect("index.html", StatusCodes.Found)
+                      }
+                    case Success(None) => complete(FailedJson(s"User $login is not found."))
+                    case Failure(ex) => failWith(ex)
+                  }
+                  case "end-work" =>
+                    deleteCookie(cookie) {
+                      redirect("index.html", StatusCodes.Found)
+                    }
                 }
               }
             }
@@ -162,13 +170,12 @@ trait LibraryService extends HttpService {
               }
             }
           } ~ path("return-book") {
-          entity(as[TakeBookJson]) { request =>
+          entity(as[BookIdJson]) { request =>
             onComplete(logbookService.findLastEntryByBookId(request.bookId) flatMap {
-              case Some(logbook) => logbookService.update(logbook.copy(receivedByUser = admin.id, returnDate = Some(new Timestamp(System.currentTimeMillis)))) //.copy(receivedByUser = admin.id, ))
+              case Some(logbook) => logbookService.update(logbook.copy(receivedByUser = admin.id, returnDate = Some(new Timestamp(System.currentTimeMillis))))
             }) {
-              case Success(_) => complete("OK")
+              case Success(_) => complete(SuccessJson())
               case Failure(ex) => failWith(ex)
-
             }
           }
         }

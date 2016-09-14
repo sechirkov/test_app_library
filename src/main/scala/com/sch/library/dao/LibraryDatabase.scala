@@ -1,20 +1,20 @@
 package com.sch.library.dao
 
-import com.sch.library.domain.table.Tables._
+import com.sch.library.dao.table.{LogBookTable, UserTable, BookTable}
 import com.sch.library.domain.{Book, User}
-import slick.dbio.DBIO
-import slick.driver.PostgresDriver.api._
+
 import slick.jdbc.meta.MTable
 
-import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * User: schirkov
  * Date: 9/8/2016
  */
-object LibraryDatabase extends DB {
+abstract class LibraryDatabase extends BookTable with LogBookTable with UserTable { this: DBComponent =>
+  import driver.api._
+  import slick.dbio.DBIO
+
   lazy val listOfBook = List(
     Book(None, "Programming in Scala Second Edition", "Martin Odersky, Lex Spoon, Bill Venners", Some("asdf431g")),
     Book(None, "Scala By Example", "Martin Odersky", Some("qwert54y")),
@@ -35,9 +35,9 @@ object LibraryDatabase extends DB {
         users.schema.create,
         users ++= userList
       ))) flatMap { case _ =>
-          checkTableExistenceAndDoAction("log_book", db.run(DBIO.seq(
+        checkTableExistenceAndDoAction("log_book", db.run(DBIO.seq(
           logbooks.schema.create
-          )))
+        )))
       } andThen {
         case _ => db.close()
       }
@@ -45,6 +45,12 @@ object LibraryDatabase extends DB {
   }
 
   private def checkTableExistenceAndDoAction(tableName: String, action: => Unit)(implicit executionContext: ExecutionContext): Future[_] = {
-    db.run(MTable.getTables(tableName)).flatMap(v => Future { if (v.isEmpty) action })
+    db.run(MTable.getTables(tableName)).flatMap(v => Future {
+      if (v.isEmpty) action
+    })
   }
 }
+
+object PostgresLibraryDatabase extends LibraryDatabase with PostgresDBComponent
+
+object H2LibraryDatabase extends LibraryDatabase with H2DBComponent

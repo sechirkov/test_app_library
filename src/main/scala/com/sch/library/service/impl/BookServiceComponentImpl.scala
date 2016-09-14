@@ -17,7 +17,6 @@ trait BookServiceComponentImpl extends BookServiceComponent {
   this: BookDaoComponent =>
   class BookServiceImpl extends BookService {
     override def findAll(): Future[Seq[Book]] = bookDao.findAll()
-    override def update(book: Book): Future[Boolean] = bookDao.update(book)
     override def persist(book: Book): Future[Book] = bookDao.persist(book)
     override def delete(book: Book): Future[Boolean] = bookDao.delete(book)
     override def findAvailable(): Future[Seq[Book]] = bookDao.findAvailable()

@@ -1,11 +1,10 @@
 package com.sch.library.service
 
-import com.sch.library.dao.DB
+import com.sch.library.dao.PostgresDBComponent
 import com.sch.library.dao.impl.{BookDaoComponentImpl, LogBookDaoComponentImpl, UserDaoComponentImpl}
 import com.sch.library.service.impl.{BookServiceComponentImpl, LogBookServiceComponentImpl, UserServiceComponentImpl}
 
-import scala.concurrent.ExecutionContext
-import ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * User: schirkov
@@ -14,7 +13,7 @@ import ExecutionContext.Implicits.global
 object ComponentRegistry extends BookDaoComponentImpl with BookServiceComponentImpl
 with UserDaoComponentImpl with UserServiceComponentImpl
 with LogBookDaoComponentImpl with LogBookServiceComponentImpl
-with DB {
+with PostgresDBComponent {
   val bookDao = new BookDaoImpl
   val bookService = new BookServiceImpl
   val userDao = new UserDaoImpl

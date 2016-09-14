@@ -12,5 +12,4 @@ trait GenericDao[T] {
   def findAll(): Future[Seq[T]]
   def delete(entity: T): Future[Boolean]
   def persist(entity: T): Future[T]
-  def update(entity: T): Future[Boolean]
 }
