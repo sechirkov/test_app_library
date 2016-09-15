@@ -12,7 +12,7 @@ import spray.caching.{Cache, LruCache}
 import spray.http.HttpCookie
 import spray.httpx.SprayJsonSupport._
 import spray.routing._
-import spray.routing.authentication.{BasicAuth, BasicHttpAuthenticator, CachedUserPassAuthenticator, UserPass}
+import spray.routing.authentication._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -20,8 +20,6 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.{Failure, Success}
 
-// we don't implement our route structure directly in the service actor because
-// we want to be able to test it independently, without having to spin up an actor
 class LibraryServiceActor extends {
   val userService = ComponentRegistry.userService
   val bookService = ComponentRegistry.bookService
@@ -35,10 +33,9 @@ class LibraryServiceActor extends {
   // this actor only runs our route, but you could add
   // other things here, like request stream processing
   // or timeout handling
-  def receive = runRoute(staticResources ~ authenticate(basicAuth())(route))
+  def receive = runRoute(staticResources ~ authenticate(basicAuth())(routes))
 }
 
-// this trait defines our service behavior independently from the service actor
 trait StaticContentService extends HttpService {
   val staticResources = pathPrefix("css") {
     get {
@@ -52,54 +49,34 @@ trait StaticContentService extends HttpService {
     }
 }
 
-trait BasicAuthenticationService extends HttpService {
-
-  type UserPassAuthenticator[T] = Option[UserPass] => Future[Option[T]]
+trait BasicAuthenticationService {
 
   val userService: UserServiceComponent#UserService
 
   lazy val cache:Cache[Option[User]] = LruCache(timeToLive = 5 minute)
 
-  def basicAuth[T](authenticator: UserPassAuthenticator[T] = DaoUserPassAuthenticator,
-                   realm: String = "secured resource"):BasicHttpAuthenticator[T] = BasicAuth(authenticator, realm)
+  def basicAuth(authenticator: UserPassAuthenticator[User] = CachedUserPassAuthenticator(DaoUserPassAuthenticator, cache = cache),
+                   realm: String = "secured resource"):BasicHttpAuthenticator[User] = BasicAuth(authenticator, realm)
 
   object DaoUserPassAuthenticator extends UserPassAuthenticator[User] {
     override def apply(userPass: Option[UserPass]): Future[Option[User]] = (for {
       p <- userPass
-    } yield userService.findByLogin(p.user)).getOrElse(Future {
+    } yield userService.findByLogin(p.user)).getOrElse(Future.successful {
       None
     })
   }
-
-  object CachedDaoUserPassAuthenticator extends UserPassAuthenticator[User] {
-    override def apply(userPass: Option[UserPass]): Future[Option[User]] = CachedUserPassAuthenticator(DaoUserPassAuthenticator, cache = cache)(userPass)
-  }
-
-
-  class UserDaoAuthenticator extends
-
-
-
-
-
-  def authenticator(userPass: Option[UserPass]): Future[Option[User]] =
-
-  def basicAuth = authenticate(BasicAuth(CachedUserPassAuthenticator(authenticator, cache = cache) _, realm = "secured resource"))
 }
 
-trait LibraryService extends HttpService  {
+trait BookListService extends HttpService {
 
   val bookService: BookServiceComponent#BookService
   val userService: UserServiceComponent#UserService
   val logbookService: LogBookServiceComponent#LogBookService
 
-  def route: SecureRoute = admin =>
-    path("index.html") {
-      getFromResource("views/index.html")
+  val booksRoute: SecuredRoute = admin =>
+    path("books.html") {
+      getFromResource("views/books.html")
     } ~
-      path("books.html") {
-        getFromResource("views/books.html")
-      } ~
       path("books.json") {
         post {
           onComplete(bookService.findAvailable()) {
@@ -108,22 +85,11 @@ trait LibraryService extends HttpService  {
           }
         }
       } ~
-      path("save-book") {
-        post {
-          entity(as[Book]) { book => {
-            onComplete(bookService.persist(book.copy(inventoryNumber = Some(InventoryNumberGenerator.generate(book.title, book.authors, new Date()))))) {
-              case Success(b) => complete(b)
-              case Failure(ex) => failWith(ex)
-            }
-          }
-          }
-        }
-      } ~
       path("take-book") {
         post {
           entity(as[BookIdJson]) {
             request => {
-              cookie("current_user") { currentUser =>
+              cookie(currentUserCookieName) { currentUser =>
                 onComplete(userService.findByLogin(currentUser.content) flatMap {
                   case Some(user) => logbookService.persist(LogBook(None, request.bookId, user.id.get, admin.id.get, new Timestamp(System.currentTimeMillis)))
                   case _ => throw new RuntimeException
@@ -135,10 +101,38 @@ trait LibraryService extends HttpService  {
             }
           }
         }
-      } ~
-      path("users.html") {
-        getFromResource("views/users.html")
-      } ~
+      }
+}
+
+trait AddBookService extends HttpService {
+
+  val bookService: BookServiceComponent#BookService
+
+  val addBookRoute: SecuredRoute = admin =>
+    path("add-book.html") {
+      getFromResource("views/add-book.html")
+    } ~
+      path("save-book") {
+        post {
+          entity(as[Book]) { book => {
+            onComplete(bookService.persist(book.copy(inventoryNumber = Some(InventoryNumberGenerator.generate(book.title, book.authors, new Date()))))) {
+              case Success(b) => complete(b)
+              case Failure(ex) => failWith(ex)
+            }
+          }
+          }
+        }
+      }
+}
+
+trait UserListService extends HttpService {
+
+  val userService: UserServiceComponent#UserService
+
+  val usersRoute: SecuredRoute = admin =>
+    path("users.html") {
+      getFromResource("views/users.html")
+    } ~
       path("users.json") {
         post {
           onComplete(userService.findAll()) {
@@ -146,13 +140,17 @@ trait LibraryService extends HttpService  {
             case Failure(ex) => complete(FailedJson(s"Cannot load data: ${ex.getMessage}"))
           }
         }
-      } ~
-      path("add-user.html") {
-        getFromResource("views/add-user.html")
-      } ~
-      path("add-book.html") {
-        getFromResource("views/add-book.html")
-      } ~
+      }
+}
+
+trait AddUserService extends HttpService {
+
+  val userService: UserServiceComponent#UserService
+
+  val addUserRoute: SecuredRoute = admin =>
+    path("add-user.html") {
+      getFromResource("views/add-user.html")
+    } ~
       path("save-user") {
         post {
           entity(as[User]) { user => {
@@ -163,32 +161,19 @@ trait LibraryService extends HttpService  {
           }
           }
         }
-      } ~
-      path("process-user") {
-        post {
-          entity(as[ProcessUserJson]) { request =>
-            val login = request.login.getOrElse("")
-            val cookie = HttpCookie("current_user", login)
-            request.action match {
-              case UserAction.startWork => onComplete(userService.findByLogin(login)) {
-                case Success(Some(user)) =>
-                  setCookie(cookie) {
-                    complete(SuccessJson())
-                  }
-                case Success(None) => complete(FailedJson(s"User $login is not found."))
-                case Failure(ex) => failWith(ex)
-              }
-              case UserAction.endWork =>
-                deleteCookie(cookie) {
-                  complete(SuccessJson())
-                }
-            }
-          }
-        }
-      } ~
-      path("taken-books.html") {
-        getFromResource("views/taken-books.html")
-      } ~
+      }
+}
+
+trait TakenBooksService extends HttpService {
+
+  val bookService: BookServiceComponent#BookService
+  val userService: UserServiceComponent#UserService
+  val logbookService: LogBookServiceComponent#LogBookService
+
+  val takenBooksRoute: SecuredRoute = admin =>
+    path("taken-books.html") {
+      getFromResource("views/taken-books.html")
+    } ~
       path("taken-books.json") {
         post {
           cookie("current_user") { currentUser =>
@@ -211,5 +196,53 @@ trait LibraryService extends HttpService  {
           case Failure(ex) => failWith(ex)
         }
       }
+    }
+}
+
+trait UserSessionService extends HttpService {
+  val userService: UserServiceComponent#UserService
+
+  val userSessionRoute: SecuredRoute = admin =>
+    path("process-user") {
+      post {
+        entity(as[UserSessionJson]) { request =>
+          val login = request.login.getOrElse("")
+          val cookie = HttpCookie(currentUserCookieName, login)
+          request.action match {
+            case UserAction.startWork => onComplete(userService.findByLogin(login)) {
+              case Success(Some(user)) =>
+                setCookie(cookie) {
+                  complete(SuccessJson())
+                }
+              case Success(None) => complete(FailedJson(s"User $login is not found."))
+              case Failure(ex) => failWith(ex)
+            }
+            case UserAction.endWork =>
+              deleteCookie(cookie) {
+                complete(SuccessJson())
+              }
+          }
+        }
+      }
+    }
+}
+
+trait LibraryService extends HttpService
+  with BookListService
+  with AddBookService
+  with UserListService
+  with AddUserService
+  with TakenBooksService
+  with UserSessionService {
+
+  val routeList = List[SecuredRoute](booksRoute, addBookRoute, usersRoute, addUserRoute, takenBooksRoute, userSessionRoute)
+
+  val indexRoute = path("index.html") {
+    getFromResource("views/index.html")
+  }
+
+  val routes: SecuredRoute = admin =>
+    routeList.foldLeft(indexRoute) {
+      (route, sr) => route ~ sr(admin)
     }
 }

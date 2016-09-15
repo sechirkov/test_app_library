@@ -7,11 +7,11 @@ import spray.json.DefaultJsonProtocol
  * User: schirkov
  * Date: 9/14/2016
  */
-case class ProcessUserJson(action: UserAction.Value, login: Option[String])
+case class UserSessionJson(action: UserAction.Value, login: Option[String])
 
-object ProcessUserJson extends DefaultJsonProtocol {
-  implicit val processUserJsonFormat = jsonFormat2(ProcessUserJson.apply)
+object UserSessionJson extends DefaultJsonProtocol {
   implicit val actionEnumJsonFormat = format(UserAction)
+  implicit val processUserJsonFormat = jsonFormat2(UserSessionJson.apply)
 }
 
 object UserAction extends Enumeration {
