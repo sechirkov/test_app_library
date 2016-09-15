@@ -14,7 +14,7 @@ trait LogBookServiceComponentImpl extends LogBookServiceComponent {
   this: LogBookDaoComponent =>
   class LogBookServiceImpl extends LogBookService {
     override def persist(logbook: LogBook): Future[LogBook] = logbookDao.persist(logbook)
-    override def update(logbook: LogBook): Future[Boolean] = logbookDao.update(logbook)
+    override def returnBook(logbook: LogBook): Future[Boolean] = logbookDao.returnBook(logbook)
     override def findLastEntryByBookId(bookId: Long): Future[Option[LogBook]] = logbookDao.findLastEntryByBookId(bookId)
     override def findByBookId(bookId: Long): Future[Option[LogBook]] = logbookDao.findByBookId(bookId)
   }

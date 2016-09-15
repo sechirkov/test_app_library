@@ -14,7 +14,7 @@ trait LogBookServiceComponent {
   val logbookService: LogBookService
   trait LogBookService {
     def persist(logbook: LogBook): Future[LogBook]
-    def update(logbook: LogBook): Future[Boolean]
+    def returnBook(logbook: LogBook): Future[Boolean]
     def findByBookId(bookId: Long): Future[Option[LogBook]]
     def findLastEntryByBookId(bookId: Long): Future[Option[LogBook]]
   }

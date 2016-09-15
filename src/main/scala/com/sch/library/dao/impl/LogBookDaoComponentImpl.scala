@@ -20,10 +20,9 @@ trait LogBookDaoComponentImpl extends LogBookDaoComponent with LogBookTable {
       val insertQuery = logbooks returning logbooks.map(_.id) into ((logbook, id) => logbook.copy(id=Some(id)))
       db.run(insertQuery += logbook)
     }
-    def update(logbook: LogBook): Future[Boolean] = {
+    override def returnBook(logbook: LogBook): Future[Boolean] = {
       val query = logbooks.filter(_.id === logbook.id).map(lb => (lb.receivedByUser, lb.returnDate)).update((logbook.receivedByUser, logbook.returnDate))
-      query.statements.foreach(println)
-      db.run(query.map(_ > 0)) //todo refactor update query
+      db.run(query.map(_ > 0))
     }
     override def findLastEntryByBookId(bookId: Long): Future[Option[LogBook]] = db.run(logbooks.filter(_.bookId === bookId).filter(_.returnDate.isEmpty).result.headOption)
     override def findByBookId(bookId: Long): Future[Option[LogBook]] = db.run(logbooks.filter(_.bookId === bookId).result.headOption)

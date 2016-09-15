@@ -24,12 +24,31 @@
             if (user) {
                 $("#not-selected-user").hide();
                 $("#selected-user").html('<p>Current user: <b>' + user + '</b></p>').show();
-                var form = $("#select-user-form");
-                form.find("input[name=action]").val("end-work");
-                form.find("input[name=select_user_button]").val("Cancel");
+                $("#select-user-form").find("input[name=action]").val("end-work");
+                $("#process_user_button").val("Cancel");
 
                 $("#tabs").find("li:hidden").show();
             }
+            $("#process_user_button").click(function(){
+                var form = $("#select-user-form");
+                var data = {action: form.find("input[name=action]").val()};
+                if (form.find("input[name=current_user]").is(":visible")) {
+                    data.login = form.find("input[name=current_user]").val();
+                }
+                $.ajax({
+                    url: "process-user",
+                    contentType: "application/json",
+                    type: "post",
+                    dataType: "json",
+                    data: JSON.stringify(data),
+                    success: function (result) {
+                        location.href = "index.html";
+                    },
+                    error: function () {
+                        alert("Oups, something goes wrong!");
+                    }
+                });
+            });
         });
     </script>
     <style>
@@ -71,15 +90,15 @@
 <body>
 <h1>Library application</h1>
 <div>
-    <form method="post" action="/process-user" id="select-user-form">
+    <div id="select-user-form">
         <div id="not-selected-user">
             <label>Select the user</label>
             <input type="text" name="current_user"/>
         </div>
         <div id="selected-user" style="display: none"></div>
         <input type="hidden" name="action" value="start-work"/>
-        <input type="submit" name="select_user_button" value="Select"/>
-    </form>
+        <input type="button" id="process_user_button" value="Select"/>
+    </div>
 </div>
 <div id="tabs">
     <ul>
