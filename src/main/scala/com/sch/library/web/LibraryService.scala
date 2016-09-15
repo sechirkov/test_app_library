@@ -39,14 +39,18 @@ class LibraryServiceActor extends {
 trait StaticContentService extends HttpService {
   val staticResources = pathPrefix("css") {
     get {
-      getFromResourceDirectory("css")
+      getFromResourceDirectory("js")
     }
   } ~
     pathPrefix("js") {
       get {
         getFromResourceDirectory("js")
       }
+    } ~ pathPrefix("png") {
+    get {
+      getFromResourceDirectory("js")
     }
+  }
 }
 
 trait BasicAuthenticationService {
