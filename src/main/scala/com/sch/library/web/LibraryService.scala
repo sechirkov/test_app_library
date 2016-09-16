@@ -77,7 +77,7 @@ trait BookListService extends HttpService {
   val userService: UserServiceComponent#UserService
   val logbookService: LogBookServiceComponent#LogBookService
 
-  val booksRoute: SecuredRoute = admin =>
+  val booksRoute: SecureRoute = admin =>
     path("books.html") {
       getFromResource("views/books.html")
     } ~
@@ -112,7 +112,7 @@ trait AddBookService extends HttpService {
 
   val bookService: BookServiceComponent#BookService
 
-  val addBookRoute: SecuredRoute = admin =>
+  val addBookRoute: SecureRoute = admin =>
     path("add-book.html") {
       getFromResource("views/add-book.html")
     } ~
@@ -133,7 +133,7 @@ trait UserListService extends HttpService {
 
   val userService: UserServiceComponent#UserService
 
-  val usersRoute: SecuredRoute = admin =>
+  val usersRoute: SecureRoute = admin =>
     path("users.html") {
       getFromResource("views/users.html")
     } ~
@@ -151,7 +151,7 @@ trait AddUserService extends HttpService {
 
   val userService: UserServiceComponent#UserService
 
-  val addUserRoute: SecuredRoute = admin =>
+  val addUserRoute: SecureRoute = admin =>
     path("add-user.html") {
       getFromResource("views/add-user.html")
     } ~
@@ -174,7 +174,7 @@ trait TakenBooksService extends HttpService {
   val userService: UserServiceComponent#UserService
   val logbookService: LogBookServiceComponent#LogBookService
 
-  val takenBooksRoute: SecuredRoute = admin =>
+  val takenBooksRoute: SecureRoute = admin =>
     path("taken-books.html") {
       getFromResource("views/taken-books.html")
     } ~
@@ -206,7 +206,7 @@ trait TakenBooksService extends HttpService {
 trait UserSessionService extends HttpService {
   val userService: UserServiceComponent#UserService
 
-  val userSessionRoute: SecuredRoute = admin =>
+  val userSessionRoute: SecureRoute = admin =>
     path("process-user") {
       post {
         entity(as[UserSessionJson]) { request =>
@@ -239,13 +239,13 @@ trait LibraryService extends HttpService
   with TakenBooksService
   with UserSessionService {
 
-  val routeList = List[SecuredRoute](booksRoute, addBookRoute, usersRoute, addUserRoute, takenBooksRoute, userSessionRoute)
+  val routeList = List[SecureRoute](booksRoute, addBookRoute, usersRoute, addUserRoute, takenBooksRoute, userSessionRoute)
 
   val indexRoute = path("index.html") {
     getFromResource("views/index.html")
   }
 
-  val routes: SecuredRoute = admin =>
+  val routes: SecureRoute = admin =>
     routeList.foldLeft(indexRoute) {
       (route, sr) => route ~ sr(admin)
     }

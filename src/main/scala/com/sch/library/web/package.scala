@@ -11,7 +11,7 @@ import scala.concurrent.Future
  * Date: 9/15/2016
  */
 package object web {
-  type SecuredRoute = User => Route
+  type SecureRoute = User => Route
 
   val currentUserCookieName = "current_user"
 }
