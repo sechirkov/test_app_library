@@ -5,7 +5,6 @@ import java.util.Date
 
 import akka.actor.Actor
 import com.sch.library.domain.{Book, LogBook, User}
-import com.sch.library.service.{BookServiceComponent, ComponentRegistry, LogBookServiceComponent, UserServiceComponent}
 import com.sch.library.util.InventoryNumberGenerator
 import com.sch.library.web.model._
 import spray.caching.{Cache, LruCache}
@@ -20,11 +19,9 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.{Failure, Success}
 
-class LibraryServiceActor extends {
-  val userService = ComponentRegistry.userService
-  val bookService = ComponentRegistry.bookService
-  val logbookService = ComponentRegistry.logbookService
-} with Actor with StaticContentService with LibraryService with BasicAuthenticationService {
+
+
+class LibraryServiceActor extends Actor with StaticContentService with LibraryService with BasicAuthenticationService {
 
   // the HttpService trait defines only one abstract member, which
   // connects the services environment to the enclosing actor or test
@@ -33,20 +30,13 @@ class LibraryServiceActor extends {
   // this actor only runs our route, but you could add
   // other things here, like request stream processing
   // or timeout handling
-  def receive = runRoute(staticResources ~ authenticate(basicAuth())(routes))
+
+  import com.sch.library.service.ComponentRegistry._
+  def receive = runRoute(staticResources ~ authenticate(basicAuth(authenticator = new DaoUserPassAuthenticator()))(routes))
 }
 
 trait StaticContentService extends HttpService {
-  val staticResources = pathPrefix("css") {
-    get {
-      getFromResourceDirectory("js")
-    }
-  } ~
-    pathPrefix("js") {
-      get {
-        getFromResourceDirectory("js")
-      }
-    } ~ pathPrefix("png") {
+  val staticResources = pathPrefix("css" | "js" | "png") {
     get {
       getFromResourceDirectory("js")
     }
@@ -55,29 +45,27 @@ trait StaticContentService extends HttpService {
 
 trait BasicAuthenticationService {
 
-  val userService: UserServiceComponent#UserService
+  lazy val cache: Cache[Option[User]] = LruCache(timeToLive = 5 minute)
 
-  lazy val cache:Cache[Option[User]] = LruCache(timeToLive = 5 minute)
-
-  def basicAuth(authenticator: UserPassAuthenticator[User] = CachedUserPassAuthenticator(DaoUserPassAuthenticator, cache = cache),
+  def basicAuth(authenticator: UserPassAuthenticator[User],
                    realm: String = "secured resource"):BasicHttpAuthenticator[User] = BasicAuth(authenticator, realm)
 
-  object DaoUserPassAuthenticator extends UserPassAuthenticator[User] {
-    override def apply(userPass: Option[UserPass]): Future[Option[User]] = (for {
-      p <- userPass
-    } yield userService.findByLogin(p.user)).getOrElse(Future.successful {
-      None
-    })
+  class DaoUserPassAuthenticator(cache: Cache[Option[User]] = cache)(implicit userService: UserService) extends UserPassAuthenticator[User] {
+    def apply(userPass: Option[UserPass]): Future[Option[User]] = CachedUserPassAuthenticator(authenticator, cache = cache).apply(userPass)
+
+    private def authenticator(userPass: Option[UserPass]): Future[Option[User]] = {
+      (for {
+        p <- userPass
+      } yield userService.findByLogin(p.user)).getOrElse(Future.successful {
+        None
+      })
+    }
   }
 }
 
 trait BookListService extends HttpService {
 
-  val bookService: BookServiceComponent#BookService
-  val userService: UserServiceComponent#UserService
-  val logbookService: LogBookServiceComponent#LogBookService
-
-  val booksRoute: SecureRoute = admin =>
+  def booksRoute(implicit bookService: BookService, userService: UserService, logbookService: LogBookService): SecureRoute = admin =>
     path("books.html") {
       getFromResource("views/books.html")
     } ~
@@ -93,7 +81,7 @@ trait BookListService extends HttpService {
         post {
           entity(as[BookIdJson]) {
             request => {
-              cookie(currentUserCookieName) { currentUser =>
+              cookie(currentUserCookieName.value) { currentUser =>
                 onComplete(userService.findByLogin(currentUser.content) flatMap {
                   case Some(user) => logbookService.persist(LogBook(None, request.bookId, user.id.get, admin.id.get, new Timestamp(System.currentTimeMillis)))
                   case _ => throw new RuntimeException
@@ -110,9 +98,7 @@ trait BookListService extends HttpService {
 
 trait AddBookService extends HttpService {
 
-  val bookService: BookServiceComponent#BookService
-
-  val addBookRoute: SecureRoute = admin =>
+  def addBookRoute(implicit bookService: BookService): SecureRoute = admin =>
     path("add-book.html") {
       getFromResource("views/add-book.html")
     } ~
@@ -131,9 +117,7 @@ trait AddBookService extends HttpService {
 
 trait UserListService extends HttpService {
 
-  val userService: UserServiceComponent#UserService
-
-  val usersRoute: SecureRoute = admin =>
+  def usersRoute(implicit userService: UserService): SecureRoute = admin =>
     path("users.html") {
       getFromResource("views/users.html")
     } ~
@@ -149,9 +133,7 @@ trait UserListService extends HttpService {
 
 trait AddUserService extends HttpService {
 
-  val userService: UserServiceComponent#UserService
-
-  val addUserRoute: SecureRoute = admin =>
+  def addUserRoute(implicit userService: UserService): SecureRoute = admin =>
     path("add-user.html") {
       getFromResource("views/add-user.html")
     } ~
@@ -170,11 +152,7 @@ trait AddUserService extends HttpService {
 
 trait TakenBooksService extends HttpService {
 
-  val bookService: BookServiceComponent#BookService
-  val userService: UserServiceComponent#UserService
-  val logbookService: LogBookServiceComponent#LogBookService
-
-  val takenBooksRoute: SecureRoute = admin =>
+  def takenBooksRoute(implicit bookService: BookService, userService: UserService, logbookService: LogBookService): SecureRoute = admin =>
     path("taken-books.html") {
       getFromResource("views/taken-books.html")
     } ~
@@ -204,14 +182,13 @@ trait TakenBooksService extends HttpService {
 }
 
 trait UserSessionService extends HttpService {
-  val userService: UserServiceComponent#UserService
 
-  val userSessionRoute: SecureRoute = admin =>
+  def userSessionRoute(implicit userService:UserService): SecureRoute = admin =>
     path("process-user") {
       post {
         entity(as[UserSessionJson]) { request =>
           val login = request.login.getOrElse("")
-          val cookie = HttpCookie(currentUserCookieName, login)
+          val cookie = HttpCookie(currentUserCookieName.value, login)
           request.action match {
             case UserAction.startWork => onComplete(userService.findByLogin(login)) {
               case Success(Some(user)) =>
@@ -239,13 +216,14 @@ trait LibraryService extends HttpService
   with TakenBooksService
   with UserSessionService {
 
-  val routeList = List[SecureRoute](booksRoute, addBookRoute, usersRoute, addUserRoute, takenBooksRoute, userSessionRoute)
+  private def routeList(implicit bookService: BookService, logbookService: LogBookService, userService: UserService) =
+    List[SecureRoute](booksRoute, addBookRoute, usersRoute, addUserRoute, takenBooksRoute, userSessionRoute)
 
   val indexRoute = path("index.html") {
     getFromResource("views/index.html")
   }
 
-  val routes: SecureRoute = admin =>
+  def routes(implicit bookService: BookService, logbookService: LogBookService, userService: UserService): SecureRoute = admin =>
     routeList.foldLeft(indexRoute) {
       (route, sr) => route ~ sr(admin)
     }

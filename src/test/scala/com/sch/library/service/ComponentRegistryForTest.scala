@@ -13,10 +13,10 @@ import scala.concurrent.ExecutionContext.Implicits.global
 object ComponentRegistryForTest extends BookDaoComponentImpl with BookServiceComponentImpl
   with UserDaoComponentImpl with UserServiceComponentImpl
   with LogBookDaoComponentImpl with LogBookServiceComponentImpl with H2DBComponent {
-  val bookDao = new BookDaoImpl
-  val bookService = new BookServiceImpl
-  val userDao = new UserDaoImpl
-  val userService = new UserServiceImpl
-  val logbookDao = new LogBookDaoImpl
-  val logbookService =new LogBookServiceImpl
+  implicit val bookDao = new BookDaoImpl
+  implicit val bookService = new BookServiceImpl
+  implicit val userDao = new UserDaoImpl
+  implicit val userService = new UserServiceImpl
+  implicit val logbookDao = new LogBookDaoImpl
+  implicit val logbookService =new LogBookServiceImpl
 }

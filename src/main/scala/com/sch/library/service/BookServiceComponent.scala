@@ -13,6 +13,9 @@ trait BookServiceComponent {
   this: BookDaoComponent =>
   val bookService:BookService
 
+  @scala.annotation.implicitNotFound("""Cannot find an implicit BookService. You might pass
+  an (implicit bookService: BookService) parameter to your method
+  or import com.sch.library.service.ComponentRegistry.bookService.""")
   trait BookService {
     def findAll(): Future[Seq[Book]]
     def persist(book: Book): Future[Book]

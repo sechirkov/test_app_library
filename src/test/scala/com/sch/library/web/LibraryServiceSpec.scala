@@ -9,11 +9,7 @@ import spray.testkit.Specs2RouteTest
   * User: schirkov
   * Date: 15.09.2016
   */
-class LibraryServiceSpec extends  {
-  override val userService: UserServiceComponent#UserService = ComponentRegistryForTest.userService
-  override val bookService: BookServiceComponent#BookService = ComponentRegistryForTest.bookService
-  override val logbookService: LogBookServiceComponent#LogBookService = ComponentRegistryForTest.logbookService
-} with SpecificationLike with Specs2RouteTest with LibraryService {
+class LibraryServiceSpec extends SpecificationLike with Specs2RouteTest with LibraryService {
   import StatusCode.int2StatusCode
 
   def actorRefFactory = system

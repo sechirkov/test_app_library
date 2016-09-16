@@ -12,6 +12,10 @@ import scala.concurrent.Future
 trait UserServiceComponent {
   this: UserDaoComponent =>
   val userService: UserService
+
+  @scala.annotation.implicitNotFound("""Cannot find an implicit UserService. You might pass
+    an (implicit userService: UserService) parameter to your method
+    or import com.sch.library.service.ComponentRegistry.userService.""")
   trait UserService {
     def findAll(): Future[Seq[User]]
     def persist(user: User): Future[User]
