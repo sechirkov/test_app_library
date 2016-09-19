@@ -1,11 +1,8 @@
 package com.sch.library
 
 import com.sch.library.domain.User
-import com.sch.library.service.{LogBookServiceComponent, BookServiceComponent, UserServiceComponent}
+import com.sch.library.service.{BookServiceComponent, LogBookServiceComponent, UserServiceComponent}
 import spray.routing.Route
-import spray.routing.authentication.UserPass
-
-import scala.concurrent.Future
 
 /**
  * User: schirkov

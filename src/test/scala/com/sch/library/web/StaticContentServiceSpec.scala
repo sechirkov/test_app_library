@@ -34,12 +34,5 @@ class StaticContentServiceSpec extends Specification with Specs2RouteTest with S
         handled must beFalse
       }
     }
-
-//    "return a MethodNotAllowed error for PUT requests to the root path" in {
-//      Put() ~> sealRoute(myRoute) ~> check {
-//        status === MethodNotAllowed
-//        responseAs[String] === "HTTP method not allowed, supported methods: GET"
-//      }
-//    }
   }
 }
